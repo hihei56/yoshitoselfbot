@@ -89,6 +89,7 @@ client.on('messageCreate', async (message) => {
 });
 
 // ログイン
+console.log('[INFO] Discordログイン開始');
 client.login(process.env.DISCORD_TOKEN).catch((error) => {
   console.error('[FATAL] ログイン失敗:', error.message, error.code);
   process.exit(1);
@@ -114,4 +115,4 @@ process.on('SIGTERM', () => {
 // プロセスを維持するためのハートビートログ
 setInterval(() => {
   console.log('[INFO] プロセス稼働中:', new Date().toISOString());
-}, 60000); // 1分ごとにログ出力
+}, 30000); // 30秒ごとにログ出力
