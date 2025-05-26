@@ -93,3 +93,10 @@ process.on('uncaughtException', (error) => {
 process.on('warning', (warning) => {
   console.warn('[WARNING]', warning);
 });
+
+// プロセスを維持（即時終了防止）
+process.on('SIGTERM', () => {
+  console.log('[INFO] SIGTERM received. Closing client...');
+  client.destroy();
+  process.exit(0);
+});
