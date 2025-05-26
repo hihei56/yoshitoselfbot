@@ -18,8 +18,14 @@ const client = new Client({
 });
 
 // Google Gemini AIの初期化
-const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY);
-const model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+let genAI, model;
+try {
+  genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_KEY);
+  model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+  console.log('[INFO] Google Gemini AI初期化成功');
+} catch (error) {
+  console.error('[ERROR] Google Gemini AI初期化失敗:', error.message);
+}
 
 // クライアント準備完了イベント
 client.once('ready', () => {
@@ -29,10 +35,10 @@ client.once('ready', () => {
 // メッセージ受信イベント
 client.on('messageCreate', async (message) => {
   try {
+    console.log(`[DEBUG] メッセージ受信: "${message.content}" from ${message.author.tag} in guild: ${message.guild ? message.guild.name : 'DM'}`);
+
     // 自分自身またはボットからのメッセージを無視
     if (message.author.id === client.user.id || message.author.bot) return;
-
-    console.log(`[DEBUG] メッセージ受信: "${message.content}" from ${message.author.tag} in guild: ${message.guild ? message.guild.name : 'DM'}`);
 
     // サーバー内メッセージの場合、許可されたロールをチェック
     if (message.guild && process.env.GUILD_ID && process.env.ALLOWED_ROLE_ID) {
@@ -74,7 +80,11 @@ client.on('messageCreate', async (message) => {
     }
   } catch (error) {
     console.error('[ERROR] メッセージ処理エラー:', error.message);
-    await message.reply('エラーが発生しました。後でもう一度試してください。');
+    try {
+      await message.reply('エラーが発生しました。後でもう一度試してください。');
+    } catch (replyError) {
+      console.error('[ERROR] 応答送信失敗:', replyError.message);
+    }
   }
 });
 
@@ -104,4 +114,4 @@ process.on('SIGTERM', () => {
 // プロセスを維持するためのハートビートログ
 setInterval(() => {
   console.log('[INFO] プロセス稼働中:', new Date().toISOString());
-}, 300000); // 5分ごとにログ出力
+}, 60000); // 1分ごとにログ出力
