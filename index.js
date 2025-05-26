@@ -1,4 +1,9 @@
 const http = require('http');
+const { Client, SpotifyRPC } = require('discord.js-selfbot-v13');
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+require('dotenv').config();
+
+// HTTPサーバー（Cloud Runのヘルスチェック用）
 const server = http.createServer((req, res) => {
   res.writeHead(200);
   res.end('Bot is running');
@@ -6,23 +11,26 @@ const server = http.createServer((req, res) => {
 server.listen(process.env.PORT || 8080, () => {
   console.log(`[INFO] HTTP server running on port ${process.env.PORT || 8080}`);
 });
-const { Client } = require('discord.js-selfbot-v13');
-const { GoogleGenerativeAI } = require('@google/generative-ai');
-require('dotenv').config();
+
+// 環境変数の確認
+if (!process.env.DISCORD_TOKEN || !process.env.GOOGLE_AI_KEY || !process.env.GUILD_ID || !process.env.ALLOWED_ROLE_ID) {
+  console.error('[FATAL] 必要な環境変数が未設定です:', {
+    DISCORD_TOKEN: process.env.DISCORD_TOKEN ? '設定済み' : '未設定',
+    GOOGLE_AI_KEY: process.env.GOOGLE_AI_KEY ? '設定済み' : '未設定',
+    GUILD_ID: process.env.GUILD_ID ? '設定済み' : '未設定',
+    ALLOWED_ROLE_ID: process.env.ALLOWED_ROLE_ID ? '設定済み' : '未設定'
+  });
+  process.exit(1);
+}
 
 // デバッグログ：アプリケーション開始
 console.log('[INFO] アプリケーション開始');
 console.log('[INFO] Node.jsバージョン:', process.version);
-console.log('[INFO] 環境変数:', {
-  DISCORD_TOKEN: process.env.DISCORD_TOKEN ? '設定済み' : '未設定',
-  GOOGLE_AI_KEY: process.env.GOOGLE_AI_KEY ? '設定済み' : '未設定',
-  GUILD_ID: process.env.GUILD_ID ? '設定済み' : '未設定',
-  ALLOWED_ROLE_ID: process.env.ALLOWED_ROLE_ID ? '設定済み' : '未設定'
-});
 
 // Discordクライアントの初期化
 const client = new Client({
-  intents: ['GUILDS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'MESSAGE_CONTENT']
+  intents: ['GUILDS', 'GUILD_MESSAGES', 'DIRECT_MESSAGES', 'MESSAGE_CONTENT'],
+  syncStatus: false
 });
 
 // Google Gemini AIの初期化
@@ -35,9 +43,37 @@ try {
   console.error('[ERROR] Google Gemini AI初期化失敗:', error.message);
 }
 
+// Spotifyステータスを設定する関数
+function setSpotifyStatus(client) {
+  const spotify = new SpotifyRPC(client)
+    .setAssetsLargeImage('spotify:ab67706c0000da84c0052dc7fb523a68affdb8f7')
+    .setAssetsSmallImage('spotify:ab6761610000f178049d8aeae802c96c8208f3b7')
+    .setAssetsLargeText('地方創生☆チクワクティクス')
+    .setState('芽兎めう (日向美ビタースイーツ♪)')
+    .setDetails('地方創生チクワクティクス')
+    .setStartTimestamp(Date.now())
+    .setEndTimestamp(Date.now() + 1000 * (3 * 60 + 30)) // 3分30秒
+    .setSongId('1234567890abcdef123456')
+    .setAlbumId('abcdef1234567890abcdef')
+    .setArtistIds(['1234567890abcdef123456']);
+  client.user.setActivity(spotify);
+  console.log('[INFO] Spotify風ステータスを設定しました');
+}
+
+// ステータスをリピートする関数
+function startStatusLoop(client) {
+  const duration = 1000 * (3 * 60 + 30); // 3分30秒
+  setSpotifyStatus(client);
+  setInterval(() => {
+    setSpotifyStatus(client);
+    console.log('[INFO] ステータスをリピートしました');
+  }, duration);
+}
+
 // クライアント準備完了イベント
 client.once('ready', () => {
   console.log(`[DEBUG] セルフボット起動！ ユーザー: ${client.user.tag}`);
+  startStatusLoop(client);
 });
 
 // メッセージ受信イベント
@@ -57,7 +93,7 @@ client.on('messageCreate', async (message) => {
       }
     }
 
-    // コマンド処理（例：!chat）
+    // コマンド処理（!chat）
     if (message.content.startsWith('!chat')) {
       const prompt = message.content.slice(6).trim();
       if (!prompt) {
@@ -65,16 +101,11 @@ client.on('messageCreate', async (message) => {
         return;
       }
 
-      // タイピングインジケータ
       await message.channel.sendTyping();
-
-      // Gemini APIで応答生成
       const result = await model.generateContent(prompt);
       const response = result.response.text();
-
       console.log(`[DEBUG] Gemini応答: ${response}`);
 
-      // 応答を送信（2000文字以内に制限）
       const maxLength = 2000;
       if (response.length > maxLength) {
         await message.reply(response.slice(0, maxLength - 3) + '...');
@@ -82,7 +113,6 @@ client.on('messageCreate', async (message) => {
         await message.reply(response);
       }
 
-      // リアクション追加（レート制限対策で遅延）
       await new Promise(resolve => setTimeout(resolve, 1000));
       await message.react('😺');
     }
@@ -94,6 +124,11 @@ client.on('messageCreate', async (message) => {
       console.error('[ERROR] 応答送信失敗:', replyError.message);
     }
   }
+});
+
+// エラー処理
+client.on('error', (error) => {
+  console.error('[ERROR] クライアントエラー:', error.message);
 });
 
 // ログイン
@@ -123,4 +158,4 @@ process.on('SIGTERM', () => {
 // プロセスを維持するためのハートビートログ
 setInterval(() => {
   console.log('[INFO] プロセス稼働中:', new Date().toISOString());
-}, 30000); // 30秒ごとにログ出力
+}, 30000);
