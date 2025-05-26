@@ -1,4 +1,7 @@
 {
+  "name": "discord-selfbot",
+  "version": "1.0.0",
+  "main": "index.js",
   "dependencies": {
     "discord.js-selfbot-v13": "^3.6.1",
     "@google/generative-ai": "^0.21.0",
