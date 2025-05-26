@@ -100,3 +100,8 @@ process.on('SIGTERM', () => {
   client.destroy();
   process.exit(0);
 });
+
+// プロセスを維持するためのハートビートログ
+setInterval(() => {
+  console.log('[INFO] プロセス稼働中:', new Date().toISOString());
+}, 300000); // 5分ごとにログ出力
