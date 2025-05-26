@@ -93,19 +93,33 @@ client.on('messageCreate', async (message) => {
       }
     }
 
-    // コマンド処理（!chat）
-    if (message.content.startsWith('!chat')) {
-      const prompt = message.content.slice(6).trim();
+    // ボットに対するメンション、リプライ、または!chatコマンドをチェック
+    const isMention = message.mentions.users.has(client.user.id);
+    const isReplyToBot = message.reference && (await message.channel.messages.fetch(message.reference.messageId)).author.id === client.user.id;
+    const isChatCommand = message.content.startsWith('!chat');
+
+    if (isChatCommand || isMention || isReplyToBot) {
+      // プロンプトの抽出
+      let prompt = '';
+      if (isChatCommand) {
+        prompt = message.content.slice(6).trim(); // !chatを除去
+      } else {
+        prompt = message.content.replace(/<@!?[0-9]+>/g, '').trim(); // メンションを除去
+      }
+
+      // プロンプトが空の場合
       if (!prompt) {
-        await message.reply('プロンプトを指定してください。例: !chat こんにちは');
+        await message.reply('何かメッセージを入力してください！');
         return;
       }
 
+      // Gemini AIで応答生成
       await message.channel.sendTyping();
       const result = await model.generateContent(prompt);
       const response = result.response.text();
       console.log(`[DEBUG] Gemini応答: ${response}`);
 
+      // 2000文字制限対応
       const maxLength = 2000;
       if (response.length > maxLength) {
         await message.reply(response.slice(0, maxLength - 3) + '...');
@@ -113,6 +127,7 @@ client.on('messageCreate', async (message) => {
         await message.reply(response);
       }
 
+      // リアクション追加
       await new Promise(resolve => setTimeout(resolve, 1000));
       await message.react('😺');
     }
@@ -158,4 +173,4 @@ process.on('SIGTERM', () => {
 // プロセスを維持するためのハートビートログ
 setInterval(() => {
   console.log('[INFO] プロセス稼働中:', new Date().toISOString());
-}, 30000);
+}, 60000);
