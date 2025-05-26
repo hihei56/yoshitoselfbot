@@ -1,3 +1,11 @@
+const http = require('http');
+const server = http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Bot is running');
+});
+server.listen(process.env.PORT || 8080, () => {
+  console.log(`[INFO] HTTP server running on port ${process.env.PORT || 8080}`);
+});
 const { Client } = require('discord.js-selfbot-v13');
 const { GoogleGenerativeAI } = require('@google/generative-ai');
 require('dotenv').config();
