@@ -1,3 +1,15 @@
+console.log('[INFO] アプリケーション開始');
+console.log('[INFO] Node.jsバージョン:', process.version);
+console.log('[INFO] 環境変数:', {
+  DISCORD_TOKEN: process.env.DISCORD_TOKEN ? '設定済み' : '未設定',
+  GOOGLE_AI_KEY: process.env.GOOGLE_AI_KEY ? '設定済み' : '未設定',
+  GUILD_ID: process.env.GUILD_ID ? '設定済み' : '未設定',
+  ALLOWED_ROLE_ID: process.env.ALLOWED_ROLE_ID ? '設定済み' : '未設定'
+});
+client.login(process.env.DISCORD_TOKEN).catch((error) => {
+  console.error('[FATAL] ログイン失敗:', error.message, error.code);
+  process.exit(1);
+});
 const fs = require('fs');
 const dotenvPath = __dirname + '/.env';
 console.log('[DEBUG] .envファイル存在:', fs.existsSync(dotenvPath));
