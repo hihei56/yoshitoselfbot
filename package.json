@@ -1,12 +1,7 @@
 {
-  "name": "gemini-discord-selfbot-main",
-  "version": "1.0.0",
-  "description": "��#\u0000 \u0000y\u0000o\u0000s\u0000h\u0000i\u0000t\u0000o\u0000s\u0000e\u0000l\u0000f\u0000b\u0000o\u0000t\u0000\r\u0000 \u0000",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC"
+  "dependencies": {
+    "discord.js-selfbot-v13": "^3.6.0",
+    "@google/generative-ai": "^0.21.0",
+    "dotenv": "^16.4.5"
+  }
 }
