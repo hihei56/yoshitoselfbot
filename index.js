@@ -109,7 +109,7 @@ client.on('messageCreate', async (message) => {
 
       // プロンプトが空の場合
       if (!userInput) {
-        await message.reply('何かメッセージを入力してください！');
+        await message.channel.send('何かメッセージを入力してください！');
         return;
       }
 
@@ -128,9 +128,9 @@ client.on('messageCreate', async (message) => {
       // 2000文字制限対応
       const maxLength = 2000;
       if (response.length > maxLength) {
-        await message.reply(response.slice(0, maxLength - 3) + '...');
+        await message.channel.send(response.slice(0, maxLength - 3) + '...');
       } else {
-        await message.reply(response);
+        await message.channel.send(response);
       }
 
       // リアクション追加
@@ -140,9 +140,9 @@ client.on('messageCreate', async (message) => {
   } catch (error) {
     console.error('[ERROR] メッセージ処理エラー:', error.message);
     try {
-      await message.reply('エラーが発生しました。後でもう一度試してください。');
-    } catch (replyError) {
-      console.error('[ERROR] 応答送信失敗:', replyError.message);
+      await message.channel.send('エラーが発生しました。後でもう一度試してください。');
+    } catch (sendError) {
+      console.error('[ERROR] 応答送信失敗:', sendError.message);
     }
   }
 });
