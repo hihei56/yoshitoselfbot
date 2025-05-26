@@ -100,18 +100,24 @@ client.on('messageCreate', async (message) => {
 
     if (isChatCommand || isMention || isReplyToBot) {
       // プロンプトの抽出
-      let prompt = '';
+      let userInput = '';
       if (isChatCommand) {
-        prompt = message.content.slice(6).trim(); // !chatを除去
+        userInput = message.content.slice(6).trim(); // !chatを除去
       } else {
-        prompt = message.content.replace(/<@!?[0-9]+>/g, '').trim(); // メンションを除去
+        userInput = message.content.replace(/<@!?[0-9]+>/g, '').trim(); // メンションを除去
       }
 
       // プロンプトが空の場合
-      if (!prompt) {
+      if (!userInput) {
         await message.reply('何かメッセージを入力してください！');
         return;
       }
+
+      // 日本語応答を強制するプロンプト
+      const prompt = `以下の指示に従ってください：
+1. 必ず日本語で応答してください。
+2. 応答内容を15行以内にしてください。
+ユーザーの入力: ${userInput}`;
 
       // Gemini AIで応答生成
       await message.channel.sendTyping();
